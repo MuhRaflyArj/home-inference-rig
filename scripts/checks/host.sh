@@ -22,19 +22,26 @@ llama-swap --version
 echo "=== Media & Node 22 ==="
 ffmpeg -version | sed -n '1p'
 ffprobe -version | sed -n '1p'
-env -i HOME="$HOME" PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin" node -v
+node_ver="$(env -i HOME="$HOME" PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin" node -v)"
+echo "node: $node_ver"
+[[ "$node_ver" == v22.* ]] || die "Expected Node v22.x, found $node_ver"
 
 if [[ "$OS" == "linux" ]]; then
   echo "=== Ubuntu CUDA & Ollama ==="
   echo "ollama active: $(systemctl is-active ollama.service 2>/dev/null || echo inactive)"
   nvcc --version
   nvidia-smi --query-gpu=name,compute_cap,memory.total,driver_version --format=csv
-  ldd "$(readlink -f "$HOME/.local/bin/llama-server")" | grep -E "cuda|cublas|not found" || true
-  ldd "$(readlink -f "$HOME/.local/bin/sd-server")" | grep -E "cuda|cublas|not found" || true
-  if command -v docker >/dev/null 2>&1; then
-    docker run --rm --gpus all nvidia/cuda:12.8.0-base-ubuntu24.04 nvidia-smi --query-gpu=name,driver_version --format=csv,noheader
-  fi
+  for bin in llama-server sd-server; do
+    bin_path="$(readlink -f "$(command -v "$bin")")"
+    ldd_out="$(ldd "$bin_path")"
+    echo "$ldd_out" | grep -E "cuda|cublas" || true
+    if echo "$ldd_out" | grep -q "not found"; then
+      die "Missing shared library in $bin ($bin_path)"
+    fi
+  done
+  command -v docker >/dev/null 2>&1 || die "docker not found"
+  docker run --rm --gpus all nvidia/cuda:12.8.0-base-ubuntu24.04 nvidia-smi --query-gpu=name,driver_version --format=csv,noheader
 else
   echo "=== macOS Metal Linking ==="
-  otool -L "$(readlink -f "$HOME/.local/bin/llama-server")" | grep -i metal || true
+  otool -L "$(command -v llama-server)" | grep -i metal || true
 fi
