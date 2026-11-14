@@ -27,7 +27,7 @@ ensure_dirs_and_path() {
 
   local rc_file="$HOME/.bashrc"
   [[ "$(detect_os)" == "darwin" ]] && rc_file="$HOME/.zshrc"
-  if [[ -f "$rc_file" ]] && ! grep -q '\.local/bin' "$rc_file"; then
+  if [[ ! -f "$rc_file" ]] || ! grep -q '\.local/bin' "$rc_file"; then
     printf '\nexport PATH="$HOME/.local/bin:$PATH"\n' >> "$rc_file"
   fi
 }
