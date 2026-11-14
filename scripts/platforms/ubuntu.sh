@@ -54,7 +54,7 @@ preflight_ubuntu() {
 }
 
 install_apt_deps() {
-  local pkgs=(build-essential ninja-build pkg-config libcurl4-openssl-dev ffmpeg)
+  local pkgs=(build-essential ninja-build pkg-config libcurl4-openssl-dev ffmpeg git cmake curl ca-certificates unzip)
   local missing=()
   for p in "${pkgs[@]}"; do
     dpkg -s "$p" >/dev/null 2>&1 || missing+=("$p")
