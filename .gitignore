@@ -1,0 +1,10 @@
+.env
+*.env.local
+AGENTS.md
+agents/
+node_modules/
+dist/
+build/
+.DS_Store
+Thumbs.db
+*.log
